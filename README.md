@@ -1,1 +1,224 @@
 # Token-Fornite
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortnite Arena Pro</title>
+
+<style>
+body {
+    margin:0;
+    font-family: Arial;
+    background:#0b0b0b;
+    color:white;
+}
+
+header {
+    background:#111;
+    padding:15px;
+    text-align:center;
+    color:#00ffcc;
+    font-weight:bold;
+}
+
+.container {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:10px;
+}
+
+.card {
+    background:#151515;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #222;
+}
+
+input, button {
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    border:none;
+    border-radius:6px;
+}
+
+button {
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.create { background:#00ffcc; }
+.win { background:#00c853; }
+.dispute { background:#ff3b3b; color:white; }
+.staff { background:#ffcc00; }
+
+.small { font-size:12px; opacity:0.7; }
+
+.chatBox {
+    height:120px;
+    overflow:auto;
+    background:#0d0d0d;
+    padding:5px;
+    border-radius:6px;
+    border:1px solid #222;
+}
+</style>
+</head>
+
+<body>
+
+<header>🔥 Fortnite Arena Full System 🔥</header>
+
+<div class="container">
+
+<!-- ACCOUNT -->
+<div class="card">
+<h3>👤 Compte joueur</h3>
+<input id="user" placeholder="Pseudo">
+<button class="create" onclick="register()">Créer / Connexion</button>
+</div>
+
+<!-- MATCH -->
+<div class="card">
+<h3>🎮 Match 1v1</h3>
+<input id="p1" placeholder="Joueur 1">
+<input id="p2" placeholder="Joueur 2">
+<button class="create" onclick="createMatch()">Créer match</button>
+<div id="match"></div>
+</div>
+
+<!-- CHAT -->
+<div class="card">
+<h3>💬 Chat joueurs</h3>
+
+<div class="chatBox" id="chat"></div>
+
+<input id="msg" placeholder="Message">
+<button class="create" onclick="sendMsg()">Envoyer</button>
+</div>
+
+<!-- DISPUTE -->
+<div class="card">
+<h3>⚖️ Disputes</h3>
+<div id="disputes">Aucune dispute</div>
+</div>
+
+<!-- STAFF -->
+<div class="card">
+<h3>👨‍⚖️ Panel Staff</h3>
+<button class="staff" onclick="resolve()">Résoudre dispute</button>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="card">
+<h3>🏆 Classement ELO</h3>
+<div id="board"></div>
+</div>
+
+</div>
+
+<script>
+
+let players = {};
+let currentUser = null;
+let currentMatch = null;
+let chats = [];
+let disputes = [];
+
+// ACCOUNT
+function register() {
+    let u = document.getElementById("user").value;
+    if (!u) return alert("Pseudo requis");
+
+    if (!players[u]) players[u] = { elo: 1000 };
+
+    currentUser = u;
+    alert("Connecté : " + u);
+    renderBoard();
+}
+
+// MATCH
+function createMatch() {
+    let p1 = document.getElementById("p1").value;
+    let p2 = document.getElementById("p2").value;
+
+    if (!players[p1] || !players[p2]) {
+        alert("Les joueurs doivent avoir un compte");
+        return;
+    }
+
+    currentMatch = { p1, p2, disputed:false };
+
+    document.getElementById("match").innerHTML = `
+        ${p1} vs ${p2}<br><br>
+        <button class="win" onclick="win('${p1}','${p2}',1)">${p1} gagne</button>
+        <button class="win" onclick="win('${p1}','${p2}',2)">${p2} gagne</button>
+        <button class="dispute" onclick="dispute()">Contester</button>
+    `;
+}
+
+function win(p1,p2,winner) {
+    let K = 30;
+
+    if (winner === 1) {
+        players[p1].elo += K;
+        players[p2].elo -= K;
+    } else {
+        players[p2].elo += K;
+        players[p1].elo -= K;
+    }
+
+    currentMatch = null;
+    document.getElementById("match").innerHTML = "Match terminé";
+    renderBoard();
+}
+
+// DISPUTE
+function dispute() {
+    disputes.push(currentMatch);
+    document.getElementById("disputes").innerHTML = 
+        disputes.map((d,i)=>`Dispute #${i+1}: ${d.p1} vs ${d.p2}`).join("<br>");
+    alert("Match contesté !");
+}
+
+// STAFF
+function resolve() {
+    if (disputes.length === 0) return alert("Aucune dispute");
+
+    let d = disputes.shift();
+    alert("Staff : décision prise pour " + d.p1 + " vs " + d.p2);
+
+    document.getElementById("disputes").innerHTML =
+        disputes.length ? disputes.map((d,i)=>`Dispute #${i+1}: ${d.p1} vs ${d.p2}`).join("<br>") : "Aucune dispute";
+}
+
+// CHAT
+function sendMsg() {
+    let m = document.getElementById("msg").value;
+    if (!m) return;
+
+    chats.push((currentUser || "Anon") + ": " + m);
+
+    document.getElementById("chat").innerHTML =
+        chats.slice(-10).join("<br>");
+
+    document.getElementById("msg").value = "";
+}
+
+// LEADERBOARD
+function renderBoard() {
+    let b = document.getElementById("board");
+
+    let sorted = Object.keys(players).sort((a,b)=>players[b].elo-players[a].elo);
+
+    b.innerHTML = sorted.map(p =>
+        `<div>${p} - <span class="small">ELO ${players[p].elo}</span></div>`
+    ).join("");
+}
+
+</script>
+
+</body>
+</html>
